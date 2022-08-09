@@ -1,6 +1,9 @@
 // MVC - model-view-controller framework
 const Campground = require('../models/campground');
 const { cloudinary } = require('../cloudinary')
+const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding')
+const mapboxToken = process.env.MAPBOX_TOKEN;
+const geoCoder = mbxGeocoding({ accessToken: mapboxToken })
 
 module.exports.index = async (req, res) => {
     const campgrounds = await Campground.find({});
@@ -15,12 +18,18 @@ module.exports.createCampground = async (req, res, next) => {
     // if (!req.body.campgrounds) {
     //     throw new ExpressError('Invalid Campground Data!');
     // }
+    const geoData = await geoCoder.forwardGeocode({
+        query: req.body.campgrounds.location,
+        limit: 1
+    }).send()
+
     const campground = new Campground(req.body.campgrounds);
+    campground.geometry = geoData.body.features[0].geometry;
     // create an array of objects by mapping the infomation from req.files
     campground.images = req.files.map(f => ({ url: f.path, filename: f.filename }))
     campground.author = req.user._id;
     await campground.save();
-    console.log(campground)
+    // console.log(campground)
     req.flash('success', 'Successfully made a new campground!')
     res.redirect(`/campgrounds/${campground._id}`);
 }
