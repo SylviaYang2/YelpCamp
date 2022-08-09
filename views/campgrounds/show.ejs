@@ -2,6 +2,7 @@
     <link rel="stylesheet" href="/stylesheets/stars.css">
 
     <!-- run as ejs first so that we can access mapToken in showPageMap.js -->
+    <!-- variables can be accessed from another file using the <script> tags or the import or export statement. The script tag is mainly used when we want to access variable of a JavaScript file in an HTML file. -->
     <script>
         const mapToken = '<%- process.env.MAPBOX_TOKEN %>';
         const campground = <%- JSON.stringify(campground) %>;
@@ -68,7 +69,7 @@
 
         <div class="col-6">
             <div id="map" style="width: 400px; height:300px;"></div>
-            
+
             <% if(currentUser){ %>
                 <h2>Leave a Review</h2>
                 <form action="/campgrounds/<%= campground._id %>/reviews" method="post" class="mb-3 validated-form"
