@@ -1,6 +1,7 @@
-if (process.env.NODE_ENV !== 'production') {
-    require("dotenv").config();
-}
+// if (process.env.NODE_ENV !== 'production') {
+//     require("dotenv").config();
+// }
+require("dotenv").config();
 
 const express = require('express');
 const app = express();
@@ -13,6 +14,8 @@ const flash = require('connect-flash')
 const passport = require('passport')
 const User = require('./models/user');
 const LocalStrategy = require('passport-local').Strategy
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require("helmet");
 
 const ExpressError = require('./utils/ExpressError');
 
@@ -39,6 +42,7 @@ app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')))
 
 const sessionConfig = {
+    name: 'session',
     secret: 'thisshouldbeabettersecret!',
     resave: false,
     saveUninitialized: true,
@@ -47,21 +51,73 @@ const sessionConfig = {
         // expire in a week
         expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
         maxAge: 1000 * 60 * 60 * 24 * 7,
-        secure: false
     }
 }
 app.use(session(sessionConfig))
 app.use(flash())
+// app.use(helmet());
+
+// const scriptSrcUrls = [
+//     "https://stackpath.bootstrapcdn.com/",
+//     // "https://api.tiles.mapbox.com/",
+//     "https://www.mapbox.com/maps",
+//     // "https://www.mapbox.com/mapbox-gljs",
+//     // "https://docs.mapbox.com/mapbox-gl-js/guides/",
+//     "https://docs.mapbox.com/mapbox.js/api/v3.3.1/",
+//     // "https://www.mapbox.com/",
+//     "https://kit.fontawesome.com/",
+//     "https://cdnjs.cloudflare.com/",
+//     "https://cdn.jsdelivr.net",
+// ];
+// const styleSrcUrls = [
+//     "https://kit-free.fontawesome.com/",
+//     "https://stackpath.bootstrapcdn.com/",
+//     "https://api.mapbox.com/",
+//     "https://api.tiles.mapbox.com/",
+//     "https://fonts.googleapis.com/",
+//     "https://use.fontawesome.com/",
+// ];
+// const connectSrcUrls = [
+//     "https://api.mapbox.com/",
+//     "https://a.tiles.mapbox.com/",
+//     "https://b.tiles.mapbox.com/",
+//     "https://events.mapbox.com/",
+// ];
+// const fontSrcUrls = [];
+// app.use(
+//     helmet.contentSecurityPolicy({
+//         useDefaults: false,
+//         directives: {
+//             defaultSrc: [],
+//             connectSrc: ["'self'", ...connectSrcUrls],
+//             scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
+//             styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+//             workerSrc: ["'self'", "blob:"],
+//             objectSrc: [],
+//             imgSrc: [
+//                 "'self'",
+//                 "blob:",
+//                 "data:",
+//                 "https://res.cloudinary.com/dkveh9x59/", //SHOULD MATCH YOUR CLOUDINARY ACCOUNT! 
+//                 "https://unsplash.com/",
+//             ],
+//             fontSrc: ["'self'", ...fontSrcUrls],
+//         },
+//     })
+// );
+
 
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
+app.use(mongoSanitize());
 
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
 app.use((req, res, next) => {
     // keep track of the current user so that it can be accessed locally
+    // console.log(req.query)
     res.locals.currentUser = req.user;
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
